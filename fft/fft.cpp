@@ -8,18 +8,22 @@ Author: Jonah Eisen
 #include <complex>
 #include <iomanip>
 #include <iostream>
+#include<stdexcept>
 
 enum fft_direction_t {fwd = 1, inverse = -1};
 const double PI = std::acos(-1);
 const std::complex<double> i (0,1);
 
-std::complex<double>* fft(const std::complex<double> * , const int);
-std::complex<double>* ifft(const std::complex<double> * , const int);
-std::complex<double>* fftHelper(const std::complex<double> *, const int, const int, const fft_direction_t);
-void printFft(const std::string, const std::complex<double> *, const int);
+std::complex<double>* fft(const std::complex<double> * , int);
+std::complex<double>* ifft(const std::complex<double> * , int);
+std::complex<double>* fftHelper(const std::complex<double> *, int, int, fft_direction_t);
+void printFft(const std::string, const std::complex<double> *, int);
+bool isPowerOf2(int);
 
 int main()
 {
+    //n must be a power of 2
+    //for purposes of simple example, let program terminate if condition failed
     int n = 4;
     std::complex<double> * f = new std::complex<double>[n]{{1,0}, {1,0}, {1,0}, {1,0}};
     std::cout << "f:" << '\n';
@@ -36,7 +40,10 @@ int main()
 
 }
 
-std::complex<double>* fft(const std::complex<double> * f, const int n) {
+std::complex<double>* fft(const std::complex<double> * f, int n) {
+    if(!isPowerOf2(n)) {
+        throw std::invalid_argument("n must be a power of 2");
+    }
     std::complex<double>* fhat = fftHelper(f, n, 1, fft_direction_t::fwd);
     //rescale by factor of 1/sqrt(n)
     //this definition ensures that f and fhat have the same l^2 norm
@@ -46,7 +53,10 @@ std::complex<double>* fft(const std::complex<double> * f, const int n) {
     return fhat;
 }
 
-std::complex<double>* ifft(const std::complex<double> * fhat, const int n) {
+std::complex<double>* ifft(const std::complex<double> * fhat, int n) {
+    if(!isPowerOf2(n)) {
+        throw std::invalid_argument("n must be a power of 2");
+    }
     std::complex<double>* f = fftHelper(fhat, n, 1, fft_direction_t::inverse);
     //rescale by factor of 1/sqrt(n)
     //this definition ensures that f and fhat have the same l^2 norm
@@ -56,7 +66,7 @@ std::complex<double>* ifft(const std::complex<double> * fhat, const int n) {
     return f;
 }
 
-std::complex<double>* fftHelper(const std::complex<double> * f, const int r, const int stride, const fft_direction_t dir) {
+std::complex<double>* fftHelper(const std::complex<double> * f, int r, int stride, fft_direction_t dir) {
     //the i'th level of recursive calls to fftHelper has 2^i calls
     //for 0 <= i <= logn, stride = 2^i and r = n/stride
     //assign the j_i'th index of the calls at level i according to j_i = \sum_{k = 0}^{i-1}c_k*2^k,
@@ -88,9 +98,29 @@ std::complex<double>* fftHelper(const std::complex<double> * f, const int r, con
     }
 }
 
-void printFft(const std::string name, const std::complex<double> * func, const int n) {
+void printFft(const std::string name, const std::complex<double> * func, int n) {
     for(int j = 0; j < n; j++){
         std::cout << name << "[" << j << "]="  << func[j] << '\n';
     }
 }
 
+bool isPowerOf2(int n) {
+    if(n <= 0) {
+        //only consider positive powers of 2
+        return false;
+    }
+    //n is power of 2 iff its binary representation contains exactly one 1
+    //successively right shift (divide by 2) and check least significant digit (result % 2)
+    bool flag = false;
+    while(n >= 1) {
+        if(flag) {
+            //n >= 1 and flag has already been triggered (1 found in other position)
+            return false;
+        }
+        if(n % 2 == 1){
+            flag = true;
+        }
+        n /= 2;
+    }
+    return true;
+}
