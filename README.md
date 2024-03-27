@@ -1,4 +1,4 @@
 # examples
 
-fft: implementation of radix-2 Fast Fourier Transform in C++
-finance: ongoing project to implement and test concepts in finance 
+fft: C++ implementation of radix-2 Cooley-Tukey fast fourier transform
+finance: ongoing Python project to implement and test concepts in finance 
